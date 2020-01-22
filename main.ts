@@ -19,12 +19,31 @@ namespace myTiles {
 . . . . . . . . . . . . . . . . 
 `
 }
-function random_enemy () {
-    mySprite2 = sprites.create(list[Math.randomRange(0, list.length - 1)], SpriteKind.Enemy)
-    scene.placeOnRandomTile(mySprite2, 4)
-    mySprite2.vy = 100
-}
-function spritecreate () {
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
+    sprite.destroy()
+    info.changeScoreBy(1)
+})
+controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+    projectile = sprites.createProjectileFromSprite(img`
+. . . 4 4 4 4 . . . . . . . . . 
+4 4 4 4 5 5 4 4 4 4 . . . . . . 
+3 3 3 3 4 4 4 4 4 4 . . . . . . 
+3 3 3 2 2 2 2 5 4 4 . . . . . . 
+3 3 2 2 2 4 4 4 4 4 . . . . . . 
+4 2 3 2 4 4 4 4 4 4 . . . . . . 
+4 2 3 2 2 4 4 2 4 4 . . . . . . 
+. 4 4 2 2 2 2 4 4 . . . . . . . 
+. . . 4 4 4 4 . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`, mySprite, 0, -100)
+})
+function enemyplant () {
     mySprite = sprites.create(img`
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
@@ -227,19 +246,18 @@ function spritecreate () {
     150,
     true
     )
-    tiles.placeOnTile(mySprite, tiles.getTileLocation(4, 12))
     scene.cameraFollowSprite(mySprite)
+    mySprite.setPosition(50, 192)
     info.setLife(300)
-    controller.moveSprite(mySprite, 100, 100)
+    controller.moveSprite(mySprite, 100, 0)
 }
-scene.onHitTile(SpriteKind.Enemy, 14, function (sprite) {
+scene.onHitTile(SpriteKind.Enemy, 7, function (sprite) {
     sprite.destroy()
     info.changeLifeBy(-1)
 })
 let mySprite: Sprite = null
-let mySprite2: Sprite = null
-let list: Image[] = []
-list = [img`
+let projectile: Sprite = null
+let list = [img`
 . . . . . 6 e e e e e e e e e e c e 6 . . . . . 
 . . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
 . . . 6 7 7 6 6 6 6 e e e e 6 7 6 6 7 7 6 . . . 
@@ -256,112 +274,6 @@ list = [img`
 . . . . . . b e e e e e e e e e e b . . . . . . 
 . . . . . . . b e e e e e e e e b . . . . . . . 
 . . . . . . . . b e e e e e e b . . . . . . . . 
-`, img`
-. . . . . 6 f c e e e e e e e e e e 6 . . . . . 
-. . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
-. . . 6 7 7 7 6 6 6 e e e e 6 6 6 6 7 7 6 . . . 
-. . 6 7 7 6 8 e 6 7 7 6 6 7 7 7 6 6 7 7 7 6 . . 
-. . . 6 6 8 e e 7 7 6 8 8 6 7 7 8 8 6 6 6 . . . 
-. . . . . . e e 7 7 e e e e 7 7 e c e e . . . . 
-. . . . . . e e 6 e e e e e e 6 e e f . . . . . 
-. . . . . . e e e e e e e e e e e e f . . . . . 
-. . . . . . e e e e e e e e e e e e f . . . . . 
-. . . . . . e e e e e e e e e e e c f . . . . . 
-. . . . . . c e e e e e e e e e e c f . . . . . 
-. . . . . . c e e e e e e e e e e f f . . . . . 
-. . . . . . f e e e e e e e e e e f e . . . . . 
-. . . . . 6 f e e e e e e e e e e f 6 . . . . . 
-. . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
-. . . 6 7 7 7 6 6 6 e e e e 6 6 6 7 7 7 6 . . . 
-. . 6 7 7 6 e e 6 7 7 7 7 7 7 7 6 6 7 7 7 6 . . 
-. . . 6 6 8 e e 7 7 6 8 8 6 7 7 8 8 6 6 6 . . . 
-. . . . . . e e 7 7 e e e e 6 7 e e e e . . . . 
-. . . . . . e e 6 e e e e e e 6 c e f . . . . . 
-. . . . . . e e e e e e e e e e e e f . . . . . 
-. . . . . . e e e e e e e e e e e e f . . . . . 
-. . . . . . e e e e e e e e e e e c f . . . . . 
-. . . . . . e e e e e e e e e e e c f . . . . . 
-. . . . . . e e e e e e e e e e e f f . . . . . 
-. . . . . . f e e e e e e e e e e f e . . . . . 
-. . . . . 6 f e e e e e e e e e e f 6 . . . . . 
-. . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
-. . . 6 7 7 7 6 6 6 e e e e 6 6 6 7 7 7 6 . . . 
-. . 6 7 7 6 e e 6 7 7 7 7 7 7 7 6 6 7 7 7 6 . . 
-. . . 6 6 8 e e 7 7 6 8 8 6 7 7 8 8 6 6 6 . . . 
-. . . . . . e e 7 7 e e e e 6 7 e e . . . . . . 
-. . . . . . e e 6 e e e e e e 6 c e . . . . . . 
-. . . . . . e e f e e e e e e e c e . . . . . . 
-. . . . . . e e c e e e e e e e c e . . . . . . 
-. . . . . . e e c e e e e e e e f e . . . . . . 
-. . . . . . e e c e e e e e e e f e . . . . . . 
-. . . . . . e e e e e e e e e e f e . . . . . . 
-. . . . . . e e e e e e e e e e c e . . . . . . 
-. . . . . 6 e e e e e e e e e e c e 6 . . . . . 
-. . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
-. . . 6 7 7 6 6 6 6 e e e e 6 7 6 6 7 7 6 . . . 
-. . 6 7 7 6 e e 7 7 7 7 7 7 7 7 6 6 7 7 7 6 . . 
-. . . 6 6 8 c e 7 7 6 8 8 6 7 7 8 8 6 6 6 . . . 
-. . . . . . c e 7 7 e e e e 6 7 e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . b e e e e e e e e e e b . . . . . . 
-. . . . . . . b e e e e e e e e b . . . . . . . 
-. . . . . . . . b e e e e e e b . . . . . . . . 
-. . . . . . . . . . . . . . . . . . . . . . . . 
-`, img`
-. . . . . 6 f e e e e e e e e e e f 6 . . . . . 
-. . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
-. . . 6 7 7 7 6 6 6 e e e e 6 6 6 7 7 7 6 . . . 
-. . 6 7 7 6 e e 6 7 7 7 7 7 7 7 6 6 7 7 7 6 . . 
-. . . 6 6 8 e e 7 7 6 8 8 6 7 7 8 8 6 6 6 . . . 
-. . . . . . e e 7 7 e e e e 6 7 e e e e . . . . 
-. . . . . . e e 6 e e e e e e 6 c e f . . . . . 
-. . . . . . e e e e e e e e e e e e f . . . . . 
-. . . . . . e e e e e e e e e e e e f . . . . . 
-. . . . . . e e e e e e e e e e e c f . . . . . 
-. . . . . . e e e e e e e e e e e c f . . . . . 
-. . . . . . e e e e e e e e e e e f f . . . . . 
-. . . . . . f e e e e e e e e e e f e . . . . . 
-. . . . . 6 f e e e e e e e e e e f 6 . . . . . 
-. . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
-. . . 6 7 7 7 6 6 6 e e e e 6 6 6 7 7 7 6 . . . 
-. . 6 7 7 6 e e 6 7 7 7 7 7 7 7 6 6 7 7 7 6 . . 
-. . . 6 6 8 e e 7 7 6 8 8 6 7 7 8 8 6 6 6 . . . 
-. . . . . . e e 7 7 e e e e 6 7 e e . . . . . . 
-. . . . . . e e 6 e e e e e e 6 c e . . . . . . 
-. . . . . . e e f e e e e e e e c e . . . . . . 
-. . . . . . e e c e e e e e e e c e . . . . . . 
-. . . . . . e e c e e e e e e e f e . . . . . . 
-. . . . . . e e c e e e e e e e f e . . . . . . 
-. . . . . . e e e e e e e e e e f e . . . . . . 
-. . . . . . e e e e e e e e e e c e . . . . . . 
-. . . . . 6 e e e e e e e e e e c e 6 . . . . . 
-. . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
-. . . 6 7 7 6 6 6 6 e e e e 6 7 6 6 7 7 6 . . . 
-. . 6 7 7 6 e e 7 7 7 7 7 7 7 7 6 6 7 7 7 6 . . 
-. . . 6 6 8 c e 7 7 6 8 8 6 7 7 8 8 6 6 6 . . . 
-. . . . . . c e 7 7 e e e e 6 7 e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . e e e e e e e e e e e e . . . . . . 
-. . . . . . b e e e e e e e e e e b . . . . . . 
-. . . . . . . b e e e e e e e e b . . . . . . . 
-. . . . . . . . b e e e e e e b . . . . . . . . 
-. . . . . . . . . . . . . . . . . . . . . . . . 
-. . . . . . . . . . . . . . . . . . . . . . . . 
-. . . . . . . . . . . . . . . . . . . . . . . . 
-. . . . . . . . . . . . . . . . . . . . . . . . 
-. . . . . . . . . . . . . . . . . . . . . . . . 
-. . . . . . . . . . . . . . . . . . . . . . . . 
 `, img`
 . . . . . 6 f e e e e e e e e e e f 6 . . . . . 
 . . . . 6 7 7 6 e e e e e e e e e 6 7 6 . . . . 
@@ -397,22 +309,22 @@ list = [img`
 . . . . . . . . . . . . . . . . . . . . . . . . 
 `]
 scene.setTileMap(img`
-4 4 4 4 4 4 4 4 4 4 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-9 9 9 9 9 9 9 9 9 9 
-7 7 7 7 7 7 7 7 7 7 
-e e e e e e e e e e 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e e 
 `)
 scene.setTile(14, img`
 e e e e e e e e e e e e e e e e 
@@ -450,7 +362,4 @@ e e b b e e e e e e e e e b e e
 e e b b e e e e e e e e e e e e 
 e e e e e e e e e e e e e e e e 
 `, true)
-spritecreate()
-game.onUpdateInterval(500, function () {
-    random_enemy()
-})
+enemyplant()
